@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,8 +22,17 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
 
     // instance a scheduled executor, using a core size based on cpus
     private static ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 8);
+    
+//    private static String DEFAULT_DRIVER_LOCATION = null;
+    private static String DEFAULT_DRIVER_LOCATION = "/Users/toddanderson/Documents/Workplace/infrared5/rtcbee-node/node_modules/chromedriver/lib/chromedriver/chromedriver";
+//    private static String DEFAULT_BINARY_LOCATION = null;
+    private static String DEFAULT_BINARY_LOCATION = "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+    
+    private String binaryLocation;
 
-    private String url;
+    private String protocol;
+    
+    private String host;
 
     private int port;
 
@@ -43,15 +53,17 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
     /**
      * Original Bee - provide all parts of stream endpoint for attack.
      * 
-     * @param url
+     * @param protocol
+     * @param host
      * @param port
      * @param application
      * @param streamName
      * @param numBullets
      * @param timeout
      */
-    public Red5Bee(String url, int port, String application, String streamName, int numBullets, int timeout) {
-        this.url = url;
+    public Red5Bee(String protocol, String host, int port, String application, String streamName, int numBullets, int timeout) {
+    	this.protocol = protocol;
+        this.host = host;
         this.port = port;
         this.application = application;
         this.streamName = streamName;
@@ -71,6 +83,7 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
     public Red5Bee(String streamManagerURL, int numBullets, int port, int timeout) throws Exception {
         this.streamManagerURL = streamManagerURL;
         this.numBullets = numBullets;
+        this.protocol = "http";
         this.port = port;
         this.timeout = timeout;
         modifyEndpointProperties(this.streamManagerURL);
@@ -112,12 +125,16 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
         System.out.printf("Received Streaming Endpoint: %s.\n", endpoint);
         
         SubscriberEndpoint json = new Gson().fromJson(endpoint, SubscriberEndpoint.class);
-        this.url = json.getServerAddress();
-        this.port = this.port == 0 ? 8554 : this.port;
+        this.host = json.getServerAddress();
+        this.port = this.port == 0 ? 5080 : this.port;
         this.streamName = json.getName();
         this.application = json.getScope().substring(1, json.getScope().length());
         
-        System.out.printf("url: " + this.url + ", port: " + this.port + ", context: " + this.application + ", name " + this.streamName + ".\n");
+        System.out.printf("protocol: " + this.protocol + 
+        		"host: " + this.host + 
+        		", port: " + this.port + 
+        		", context: " + this.application + 
+        		", name " + this.streamName + ".\n");
         
     }
 
@@ -149,7 +166,8 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
         // load our bullets into the gun
         for (int i = 0; i < numBullets; i++) {
             // build a bullet
-            RTCBullet bullet = RTCBullet.Builder.build((i + 1), url, port, application, streamName, timeout);
+            RTCBullet bullet = RTCBullet.Builder.build((i + 1), protocol, host, port, application, streamName, timeout);
+            bullet.setBinaryLocation(this.binaryLocation);
             bullet.setCompleteHandler(this);
             bullet.setFailHandler(this);
             machineGun.put(i, bullet);
@@ -174,7 +192,8 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
             try {
                 modifyEndpointProperties(this.streamManagerURL);
                 // build a bullet
-                RTCBullet bullet = RTCBullet.Builder.build(++numBullets, url, port, application, streamName, timeout);
+                RTCBullet bullet = RTCBullet.Builder.build(++numBullets, protocol, host, port, application, streamName, timeout);
+                bullet.setBinaryLocation(this.binaryLocation);
                 bullet.setCompleteHandler(this);
                 bullet.setFailHandler(this);
                 // submit for execution
@@ -226,6 +245,13 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
             }
         }
     }
+    
+    private static String getDefinedArgument (String[] args, String namedParam, int index) {
+    	if (args[index].compareTo(namedParam) == 0) {
+    		return args[index + 1].trim();
+    	}
+    	return null;
+    }
 
     /**
      * Entry point.
@@ -233,18 +259,64 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
      * @param args
      * @throws InterruptedException
      */
-    public static void main(String[] args) throws InterruptedException {
-        System.out.printf("Number of arguments: %d.\n", args.length);
+    public static void main(String[] originalArgs) throws InterruptedException {
+    	
+        System.out.printf("Number of original arguments: %d.\n", originalArgs.length);
+        
         // app args
+        String protocol;
         String url;
         int port;
         String application;
         String streamName;
         int numBullets;
         int timeout = 10;
+        
+        int sliceIndex = 0;
+        String[] args = null;
+        String driverLocation = null;
+        String binaryLocation = null;
 
         Red5Bee bee;
+        
+        if (originalArgs.length > 1) {
+        	
+        	// Binary is specified
+        	binaryLocation = getDefinedArgument(originalArgs, "-b", 0);
+        	if (binaryLocation == null) {
+        		binaryLocation = getDefinedArgument(originalArgs, "-b", 2);
+        		System.out.println("Binary defined: " + binaryLocation);
+        	}
+        	else {
+        		System.out.println("Binary defined: " + binaryLocation);
+        		sliceIndex = 2;
+        	}
+        	
+        	// Driver is specified
+        	driverLocation = getDefinedArgument(originalArgs, "-d", sliceIndex);
+        	if (driverLocation != null) {
+        		sliceIndex = (binaryLocation != null) ? 4 : 2;
+        	}
+        	else {
+        		driverLocation = Red5Bee.DEFAULT_DRIVER_LOCATION;
+        	}
+        	System.out.println("Driver defined: " + driverLocation);
+        	
+        }
 
+        // >----- SET UP SYSTEM DRIVE PROPS -----
+    	// Optional, if not specified, WebDriver will search your path for chromedriver.
+    	System.setProperty("webdriver.chrome.logfile", "chromedriver.log");
+    	System.setProperty("webdriver.chrome.verboseLogging", "true");
+        if (driverLocation != null) {
+        	System.setProperty("webdriver.chrome.driver", DEFAULT_DRIVER_LOCATION);
+        }
+        // <----- SET UP SYSTEM DRIVE PROPS -----
+        
+        System.out.println("Going to trim arg list from " + sliceIndex + "...");
+        args = Arrays.copyOfRange(originalArgs, sliceIndex, originalArgs.length -1);
+        System.out.printf("Number of sliced arguments: %d.\n", args.length);
+        
         // 3 option for client specific attack.
         if (args.length < 2) {
         	
@@ -270,8 +342,8 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
             }
         	
         }
-    	// 5 option arguments for origin attack.
-        else if (args.length < 5) {
+    	// 6 option arguments for origin attack.
+        else if (args.length < 6) {
         	
             System.out.printf("Incorrect number of args, please pass in the following: \n  " + "\narg[0] = IP Address" + "\narg[1] = port" + "\narg[2] = app" + "\narg[3] = streamName" + "\narg[4] = numBullets");
             return;
@@ -279,17 +351,18 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
         }
         else {
         	
-            System.out.println("Determined its an original attack...");
+            System.out.println("Determined its an original attack... " + args[0]);
             url = args[0];
-            port = Integer.parseInt(args[1]);
-            application = args[2];
-            streamName = args[3];
-            numBullets = Integer.parseInt(args[4]);
-            if (args.length > 5) {
-                timeout = Integer.parseInt(args[5]);
+            protocol = args[1];
+            port = Integer.parseInt(args[2]);
+            application = args[3];
+            streamName = args[4];
+            numBullets = Integer.parseInt(args[5]);
+            if (args.length > 6) {
+                timeout = Integer.parseInt(args[6]);
             }
             // create the bee
-            bee = new Red5Bee(url, port, application, streamName, numBullets, timeout);
+            bee = new Red5Bee(protocol, url, port, application, streamName, numBullets, timeout);
             bee.attack();
             
         }
