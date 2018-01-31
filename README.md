@@ -57,7 +57,7 @@ The amount of time to subscribe to stream. _The actual subscription time may dif
 
 #### Example
 
-```ssh
+```sh
 $ ./rtcbee.sh "https://your.red5pro-deploy.com/live/viewer.jsp?host=your.red5pro-deploy.com&stream=streamname" 10 10
 ```
 
