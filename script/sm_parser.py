@@ -1,4 +1,4 @@
-"""
+"""Parses provided JSON in first argument and outputs 0 or valid IP.
 
 Usage:
 
@@ -26,3 +26,4 @@ elif 'errorMessage' in data:
     print(0)
 else:
     print(0)
+

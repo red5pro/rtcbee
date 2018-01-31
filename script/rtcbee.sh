@@ -1,11 +1,23 @@
 #!/bin/bash
-
-# ---------
-#   Usage:
+#===================================================================================
 #
-#   $ ./rtcbee.sh "https://redwebrtc.red5.org/live/viewer.jsp?host=redwebrtc.red5.org&stream=todd" 10 10
+# FILE: rtcbee.sh
 #
-# ---------
+# USAGE: rtcbee.sh [viewer.jsp endpoint] [amount of streams to start] [amount of time to playback]
+#
+# EXAMPLE: ./rtcbee.sh "https://redwebrtc.red5.org/live/viewer.jsp?host=redwebrtc.red5.org&stream=todd" 10 10
+#
+# DESCRIPTION: Creates N-number of headless WebRTC-based subscriptions to a live stream.
+# Console output sent to log/rtcbee_N.log and monitored for status.
+#
+# OPTIONS: see function ’usage’ below
+# REQUIREMENTS: ---
+# BUGS: ---
+# NOTES: ---
+# AUTHOR: Todd Anderson
+# COMPANY: Infrared5, Inc.
+# VERSION: 1.0.0
+#===================================================================================
 
 DEBUG_PORT_START=9000
 endpoint=$1
@@ -20,6 +32,11 @@ sysctl fs.inotify.max_user_watches=13166604
 rm -rf log
 mkdir -p log
 
+#=== FUNCTION ================================================================
+# NAME: checkStatus
+# DESCRIPTION: Check the success or failure status of the bee subscription on stream.
+# PARAMETER 1: Index number of the bee to check.
+#===============================================================================
 function checkStatus {
   bee=$1
   debug_port=$((DEBUG_PORT_START + bee))
@@ -27,11 +44,9 @@ function checkStatus {
   pid=${pids[${bee}-1]}
 
   echo "Check Status on Bee $bee..."
-
-  # if out match /Stream \w+ does not exist/g -> error
   failure=0
   success=0
-  regex_fail='Subscribe\.InvalidName'
+  regex_fail='Subscribe\.(InvalidName|Fail)'
   regex_success='Subscribe\.Start'
 
   while read -r line
@@ -43,22 +58,23 @@ function checkStatus {
     fi
   done < $log
 
-  if [ $failure -eq 1 ]; then
+  if [ $failure -eq 1 ]; then       # If failure detected...
     echo "--- ALERT ---"
     echo "Bee $bee failed in its mission. View ${log} for more details."
     kill -9 "$pid" || echo "Failure to kill ${pid}."
     echo "--- // OVER ---"
-  elif [[ $success -eq 1 ]]; then
+  elif [[ $success -eq 1 ]]; then   # If success detected...
     echo "--- Success ---"
     echo "Bee $bee has begun attack..."
     (sleep "$timeout"; kill -9 "$pid" || echo "Failure to kill ${pid}.")&
     echo "--- // OVER ---"
-  else
+  else                              # If neither, still in negotiation process.
     echo "no report yet for $bee..."
     (sleep 2; checkStatus "$bee")&
   fi
 }
 
+# Starting attack...
 dt=$(date '+%d/%m/%Y %H:%M:%S')
 echo "Starting attack at $dt"
 
@@ -75,14 +91,4 @@ done
 
 dt=$(date '+%d/%m/%Y %H:%M:%S');
 echo "Attack deployed at $dt"
-
-if [[ $amount -lt 10 ]]; then
-  echo "Giving the bees some time to setup..."
-  sleep 5
-fi
-
-# echo "Checking in on our $amount bees..."
-# for ((i=1;i<=amount;i++)); do
-#  checkStatus $i
-# done
 
