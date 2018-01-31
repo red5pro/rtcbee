@@ -23,10 +23,10 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
     // instance a scheduled executor, using a core size based on cpus
     private static ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 8);
     
-//    private static String DEFAULT_DRIVER_LOCATION = null;
-    private static String DEFAULT_DRIVER_LOCATION = "/Users/toddanderson/Documents/Workplace/infrared5/rtcbee-node/node_modules/chromedriver/lib/chromedriver/chromedriver";
-//    private static String DEFAULT_BINARY_LOCATION = null;
-    private static String DEFAULT_BINARY_LOCATION = "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+    private static String DEFAULT_DRIVER_LOCATION = null;
+//    private static String DEFAULT_DRIVER_LOCATION = "/Users/toddanderson/Documents/Workplace/infrared5/rtcbee-node/node_modules/chromedriver/lib/chromedriver/chromedriver";
+    private static String DEFAULT_BINARY_LOCATION = null;
+//    private static String DEFAULT_BINARY_LOCATION = "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
     
     private String binaryLocation;
 
@@ -60,8 +60,9 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
      * @param streamName
      * @param numBullets
      * @param timeout
+     * @param binaryLocation
      */
-    public Red5Bee(String protocol, String host, int port, String application, String streamName, int numBullets, int timeout) {
+    public Red5Bee(String protocol, String host, int port, String application, String streamName, int numBullets, int timeout, String binaryLocation) {
     	this.protocol = protocol;
         this.host = host;
         this.port = port;
@@ -69,6 +70,7 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
         this.streamName = streamName;
         this.numBullets = numBullets;
         this.timeout = timeout;
+        this.binaryLocation = binaryLocation;
         this.streamManagerURL = null;
     }
     
@@ -79,13 +81,15 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
      * @param numBullets
      * @param port
      * @param timeout
+     * @param binaryLocation
      */
-    public Red5Bee(String streamManagerURL, int numBullets, int port, int timeout) throws Exception {
+    public Red5Bee(String streamManagerURL, int numBullets, int port, int timeout, String binaryLocation) throws Exception {
         this.streamManagerURL = streamManagerURL;
         this.numBullets = numBullets;
         this.protocol = "http";
         this.port = port;
         this.timeout = timeout;
+        this.binaryLocation = binaryLocation;
         modifyEndpointProperties(this.streamManagerURL);
 
     }
@@ -285,10 +289,8 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
         	binaryLocation = getDefinedArgument(originalArgs, "-b", 0);
         	if (binaryLocation == null) {
         		binaryLocation = getDefinedArgument(originalArgs, "-b", 2);
-        		System.out.println("Binary defined: " + binaryLocation);
         	}
         	else {
-        		System.out.println("Binary defined: " + binaryLocation);
         		sliceIndex = 2;
         	}
         	
@@ -300,6 +302,12 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
         	else {
         		driverLocation = Red5Bee.DEFAULT_DRIVER_LOCATION;
         	}
+        	
+        	if (binaryLocation == null) {
+        		binaryLocation = Red5Bee.DEFAULT_BINARY_LOCATION;
+        	}
+        	
+        	System.out.println("Binary defined: " + binaryLocation);
         	System.out.println("Driver defined: " + driverLocation);
         	
         }
@@ -309,7 +317,7 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
     	System.setProperty("webdriver.chrome.logfile", "chromedriver.log");
     	System.setProperty("webdriver.chrome.verboseLogging", "true");
         if (driverLocation != null) {
-        	System.setProperty("webdriver.chrome.driver", DEFAULT_DRIVER_LOCATION);
+        	System.setProperty("webdriver.chrome.driver", driverLocation);
         }
         // <----- SET UP SYSTEM DRIVE PROPS -----
         
@@ -334,7 +342,7 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
                 timeout = Integer.parseInt(args[3]);
             }
             try {
-                bee = new Red5Bee(url, numBullets, port, timeout);
+                bee = new Red5Bee(url, numBullets, port, timeout, binaryLocation);
                 bee.attack();
             } catch (Exception e) {
                 System.out.printf("Could not properly parse provided endpoint from Stream Manager: %s.\n", args[0]);
@@ -362,7 +370,7 @@ public class Red5Bee implements IBulletCompleteHandler, IBulletFailureHandler {
                 timeout = Integer.parseInt(args[6]);
             }
             // create the bee
-            bee = new Red5Bee(protocol, url, port, application, streamName, numBullets, timeout);
+            bee = new Red5Bee(protocol, url, port, application, streamName, numBullets, timeout, binaryLocation);
             bee.attack();
             
         }

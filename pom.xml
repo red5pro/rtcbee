@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.infrared5</groupId>
     <artifactId>rtcbee</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-RELEASE</version>
     <packaging>jar</packaging>
     <name>rtcbee</name>
     <url>https://github.com/infrared5/rtcbee</url>
