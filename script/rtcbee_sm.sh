@@ -3,14 +3,16 @@
 # ---------
 #   Usage:
 #
-#   $ ./rtcbee.sh "https://redwebrtc.red5.org/live/viewer.jsp?host=redwebrtc.red5.org&stream=todd" 10 10
+#   $ ./rtcbee_sm.sh https://stream-manager.url/streammanager/api/2.0/event/live/todd?action=subscribe live todd 10 10
 #
 # ---------
 
 DEBUG_PORT_START=9000
-endpoint=$1
-amount=$2
-timeout=$3
+endpoint=$1 # stream manager endpoint
+context=$2
+name=$3
+amount=$4
+timeout=$5
 pids=()
 
 ulimit -n 65536
@@ -64,8 +66,19 @@ echo "Starting attack at $dt"
 
 for ((i=1;i<=amount;i++)); do
   debug_port=$((DEBUG_PORT_START + i))
-#  chromium-browser --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
-  /Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
+  json=$(curl -X GET -H "Content-type:application/json" "$endpoint")
+  output=$(python sm_parser.py "$json")
+  echo "output ${output}."
+  if [ "$output" -eq "0" ]; then
+    echo "--- WARNING ---"
+    echo "Bee $i could not be dispatched. ${json}"
+    echo "--- // OVER ---"
+    continue
+  fi
+  server_address="$output"
+  client_endpoint="http://${server_address}:5080/${context}/viewer.jsp?host=${server_address}&stream=${name}"
+#  chromium-browser --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$client_endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
+  /Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$client_endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
   pid=$!
   pids[$i-1]=$pid
   echo "Dispatching Bee $i, PID(${pid})..."
@@ -75,14 +88,4 @@ done
 
 dt=$(date '+%d/%m/%Y %H:%M:%S');
 echo "Attack deployed at $dt"
-
-if [[ $amount -lt 10 ]]; then
-  echo "Giving the bees some time to setup..."
-  sleep 5
-fi
-
-# echo "Checking in on our $amount bees..."
-# for ((i=1;i<=amount;i++)); do
-#  checkStatus $i
-# done
 
