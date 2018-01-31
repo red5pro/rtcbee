@@ -5,7 +5,7 @@
 #
 # USAGE: rtcbee_sm.sh [stream-manager subscribe API endpoint] [app context] [stream name] [amount of streams to start] [amount of time to playback]
 #
-# EXAMPLE: ./rtcbee_sm.sh "https://stream-manager.url/streammanager/api/2.0/event/live/todd?action=subscribe" live todd 10 10
+# EXAMPLE: ./rtcbee_sm.sh "https://stream-manager.url/streammanager/api/2.0/event/live/streamname?action=subscribe" live todd 10 10
 #
 # DESCRIPTION: Creates N-number of headless WebRTC-based subscriptions to a live stream.
 # Console output sent to log/rtcbee_N.log and monitored for status.
@@ -92,8 +92,7 @@ for ((i=1;i<=amount;i++)); do
   fi
   server_address="$output"
   client_endpoint="http://${server_address}:5080/${context}/viewer.jsp?host=${server_address}&stream=${name}"
-#  chromium-browser --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$client_endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
-  /Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$client_endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
+  chromium-browser --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$client_endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
   pid=$!
   pids[$i-1]=$pid
   echo "Dispatching Bee $i, PID(${pid})..."

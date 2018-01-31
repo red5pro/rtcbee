@@ -5,7 +5,7 @@
 #
 # USAGE: rtcbee.sh [viewer.jsp endpoint] [amount of streams to start] [amount of time to playback]
 #
-# EXAMPLE: ./rtcbee.sh "https://redwebrtc.red5.org/live/viewer.jsp?host=redwebrtc.red5.org&stream=todd" 10 10
+# EXAMPLE: ./rtcbee.sh "https://your.red5pro-deploy.com/live/viewer.jsp?host=your.red5pro-deploy.com&stream=todd" 10 10
 #
 # DESCRIPTION: Creates N-number of headless WebRTC-based subscriptions to a live stream.
 # Console output sent to log/rtcbee_N.log and monitored for status.
@@ -80,8 +80,7 @@ echo "Starting attack at $dt"
 
 for ((i=1;i<=amount;i++)); do
   debug_port=$((DEBUG_PORT_START + i))
-#  chromium-browser --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
-  /Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
+  chromium-browser --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
   pid=$!
   pids[$i-1]=$pid
   echo "Dispatching Bee $i, PID(${pid})..."
