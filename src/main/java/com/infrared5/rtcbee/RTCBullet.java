@@ -1,5 +1,7 @@
 package com.infrared5.rtcbee;
 
+import java.io.File;
+import java.util.Date;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,26 +44,42 @@ public class RTCBullet implements Runnable {
   @SuppressWarnings("unused")
   public void run() {
 	  
+	  WebDriver driver = null;
 	  try {
+		  
+		  String t = String.valueOf(new Date().getTime());
 		  
 		  String endpoint = formatEndpoint();
 		  System.out.println("Bullet #" + this.order + ", Attempting connect to " + endpoint);
 		  
 		  ChromeOptions options = new ChromeOptions();
-		  options.addArguments("--headless","--disable-gpu");
+		  options.addArguments("--headless",
+				  "--disable-gpu",
+				  "--use-gl=swiftshader-webgl",
+				  "--disable-accelerated-video-decode",
+				  "--disable-gpu-compositing",
+				  "--enable-gpu-async-worker-context",
+				  "--user-data-dir=/tmp/chrome" + this.order,
+				  "--remote-debugging-port=900" + this.order,
+				  "--mute-audio",
+				  "--window-size=1024,768",
+				  "--enable-logging",
+				  "--v=99");
 		  if (binaryLocation != null) {
-			  options.setBinary(binaryLocation);
+			  options.setBinary(new File(binaryLocation));
 		  }
 		  
-		  WebDriver driver = new ChromeDriver(options);
+		  driver = new ChromeDriver(options);
 	  	  driver.get(endpoint);
+	  	  
+	  	  final WebDriver d = driver;
 	  
 		  Red5Bee.submit(new Runnable() {
 			  public void run() {
 				  System.out.printf("Successful subscription of bullet, disposing: bullet #%d\n", order);
 				  if (completed.compareAndSet(false, true)) {
 					  if (completeHandler != null) {
-						  driver.close();
+						  d.close();
 						  completeHandler.OnBulletComplete();
 						  doRun = false;
 					  }
@@ -75,6 +93,9 @@ public class RTCBullet implements Runnable {
 	  }
 	  catch (Exception e) {
 		  e.printStackTrace();
+		  if (driver != null) {
+			  driver.close();
+		  }
 	  }
   }
 
@@ -128,6 +149,7 @@ public class RTCBullet implements Runnable {
   
   public void setBinaryLocation (String location) {
 	  this.binaryLocation = location;
+	  System.out.println("Bullet #" + this.order + ", Binary location set: " + this.binaryLocation);
   }
 
 	/**
