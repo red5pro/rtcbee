@@ -57,12 +57,12 @@ echo "Starting attack at $dt"
 
 for ((i=1;i<=amount;i++)); do
   debug_port=$((DEBUG_PORT_START + i))
-  echo "Dispatching Bee $i..."
-#  chromium-browser --single-process --user-data-dir=/tmp/chrome$(date +%s%N) --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port $endpoint >&1 | grep CONSOLE > "logs/rtcbee_${debug_port}.log" &
+#  chromium-browser --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
   /Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
   pid=$!
   pids[$i-1]=$pid
-  echo "PID filed as: ${pid}."
+  echo "Dispatching Bee $i, PID(${pid})..."
+  checkStatus $i
   sleep 1
 done
 
@@ -72,15 +72,10 @@ echo "Attack deployed at $dt"
 if [[ $amount -lt 10 ]]; then
   echo "Giving the bees some time to setup..."
   sleep 5
-else
-  echo "Because we spaced the bees out, let's start checking on their status..."
 fi
 
-debug_port=$DEBUG_PORT_START
-
-echo "Checking in on our $amount bees..."
-
-for ((i=1;i<=amount;i++)); do
-  checkStatus $i
-done
+# echo "Checking in on our $amount bees..."
+# for ((i=1;i<=amount;i++)); do
+#  checkStatus $i
+# done
 
