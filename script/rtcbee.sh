@@ -5,7 +5,7 @@
 #
 # USAGE: rtcbee.sh [viewer.jsp endpoint] [amount of streams to start] [amount of time to playback]
 #
-# EXAMPLE: ./rtcbee.sh "https://your.red5pro-deploy.com/live/viewer.jsp?host=your.red5pro-deploy.com&stream=todd" 10 10
+# EXAMPLE: ./rtcbee.sh "https://your.red5pro-deploy.com/live/viewer.jsp?host=your.red5pro-deploy.com&stream=streamname" 10 10
 #
 # DESCRIPTION: Creates N-number of headless WebRTC-based subscriptions to a live stream.
 # Console output sent to log/rtcbee_N.log and monitored for status.
