@@ -32,7 +32,8 @@ The current implementations are the command line scripts available in the [scrip
 # Attacking
 
 * [Basic Subscription](#basic-subscription)
-* [Stream Manager Subscription](#stream-manager-subscription)
+* [Stream Manager Proxy Subscription](#stream-manager-proxy-subscription)
+* [Stream Manager Edge Subscription](#stream-manager-edge-subscription)
 
 ## Basic Subscription
 
@@ -57,16 +58,53 @@ The amount of time to subscribe to stream. _The actual subscription time may dif
 
 #### Example
 
-```ssh
+```sh
 $ ./rtcbee.sh "https://your.red5pro-deploy.com/live/viewer.jsp?host=your.red5pro-deploy.com&stream=streamname" 10 10
 ```
 
-## Stream Manager Subscription
+## Stream Manager Proxy Subscription
+
+The following example demonstrates how to assemble an attack against the multiple Edges deployed and accessible through the Stream Manager.
+Included in the Red5 Pro Server distribution within the `live` webapp is are basic Stream Manager proxy examples that wllow for client configurations through query parameters.
+
+* `/webapps/live/proxy-publisher.html`
+* `/webapps/live/proxy-subscriber.html`
+
+There are various query parameters you can set to test with the proxy examples, but for the purpose of using the `rtcbee` to test roundtrip tests through the Stream Manager to access Edge address(es) and start subscribing, the `streamName` paramter is all that is required.
+
+```sh
+$ cd script
+$ ./rtcbee.sh [subscriber proxy endpoint] [amount of streams to start] [amount of time to playback]
+```
+
+### Options
+
+#### subscriber proxy endpoint
+
+The endpoint of the `proxy-subscriber.html` file including the `streamName` query param.
+
+#### amount
+
+The amount of streams to start.
+
+#### timeout
+
+The amount of time to subscribe to stream. _The actual subscription time may differ from this amount. This is really the time lapse of start of subscription until end._
 
 ```sh
 $ cd script
 $ ./rtcbee_sm.sh [stream-manager subscribe API endpoint] [app context] [stream name] [amount of streams to start] [amount of time to playback]
 ```
+
+#### Example
+
+```sh
+$ ./rtcbee.sh https://stream-manager.url/live/proxy-subscriber.html?verbose=true&streamName=streamname" 1 100
+```
+
+## Stream Manager Edge Subscription
+
+The following example demonstrates how to assemble an attack against a single Edge in a Stream Manager deployment.
 
 ### Options
 
@@ -81,6 +119,10 @@ The webapp context name that the stream would be available in at the edge IP ret
 #### stream name
 
 The stream name to subscribe to at the edge IP returned.
+
+#### amount
+
+The amount of streams to start.
 
 #### timeout
 
