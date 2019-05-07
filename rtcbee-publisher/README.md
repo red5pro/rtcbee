@@ -12,7 +12,6 @@ TheRTC Bee publisher is a command-line program that runs a publish "attack" on a
 For the command-line based scripts, the following is required:
 
 * chromium-browser
-* python 2.7
 
 ### chromium-browser
 
