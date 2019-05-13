@@ -16,7 +16,7 @@
 # NOTES: ---
 # AUTHOR: Todd Anderson
 # COMPANY: Infrared5, Inc.
-# VERSION: 1.0.0
+# VERSION: 1.1.0
 #===================================================================================
 
 DEBUG_PORT_START=9000
@@ -48,7 +48,7 @@ function checkStatus {
   echo "Check Status on Bee $bee..."
   failure=0
   success=0
-  regex_fail='Subscribe\.(InvalidName|Fail)'
+  regex_fail='Subscribe\.(InvalidName|Fail|(Connection\.Closed))'
   regex_success='Subscribe\.Start'
 
   while read -r line
@@ -70,6 +70,8 @@ function checkStatus {
     echo "Bee $bee has begun attack..."
     (sleep "$timeout"; kill -9 "$pid" || echo "Failure to kill ${pid}.")&
     echo "--- // OVER ---"
+  elif ! kill -0 "$pid" 2>/dev/null; then # if pid doesn't exist anymore
+    echo "Bee $bee not running pid $pid... terminating"
   else                              # If success detected...
     echo "no report yet for $bee..."
     (sleep 2; checkStatus "$bee")&
