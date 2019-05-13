@@ -17,6 +17,7 @@
 # AUTHOR: Todd Anderson
 # COMPANY: Infrared5, Inc.
 # VERSION: 1.1.0
+
 #===================================================================================
 
 DEBUG_PORT_START=9000
@@ -29,8 +30,20 @@ ulimit -n 65536
 ulimit -c unlimited
 sysctl fs.inotify.max_user_watches=13166604
 
-rm -rf log
-mkdir -p log
+process=$(pgrep chromium-browse);
+
+if [ "$process" != "" ]; then
+    echo " ---------- Check free ports for start..."
+    check_port=$(ls -t ./log/ | head -1 |sed 's/[^0-9]*//g')
+    if [ $check_port -gt $DEBUG_PORT_START ];
+    then
+        DEBUG_PORT_START=$check_port;
+    fi
+else
+    mkdir -p log
+    rm -rf ./log/*
+    echo " ---------- DELETE OLD LOG FILES"
+fi
 
 #=== FUNCTION ================================================================
 # NAME: checkStatus
@@ -72,7 +85,7 @@ function checkStatus {
     echo "Bee $bee not running pid $pid... terminating"
   else                              # If neither, still in negotiation process.
     echo "no report yet for $bee..."
-    (sleep 2; checkStatus "$bee")&
+    (sleep 2; checkStatus "$bee")
   fi
 }
 
@@ -82,11 +95,13 @@ echo "Starting attack at $dt"
 
 for ((i=1;i<=amount;i++)); do
   debug_port=$((DEBUG_PORT_START + i))
-  chromium-browser --single-process --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
+  touch "log/rtcbee_${debug_port}.log"
+  chromium-browser --single-process --autoplay-policy=no-user-gesture-required --user-data-dir=/tmp/chrome"$(date +%s%N)" --headless --disable-gpu --mute-audio --window-size=1024,768 --remote-debugging-port=$debug_port "$endpoint" 3>&1 1>"log/rtcbee_${debug_port}.log" 2>&1 &
   pid=$!
   pids[$i-1]=$pid
   echo "Dispatching Bee $i, PID(${pid})..."
   checkStatus $i
+  echo "Open port:"$debug_port
   sleep 1
 done
 
