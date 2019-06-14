@@ -40,9 +40,10 @@ ffmpeg -i ./test.mp4 ./test.wav
 
 # Attacking
 
-* [Basic Subscription](#basic-subscription)
+* [Basic Publisher](#basic-publisher)
+* [Stream Manager Proxy Publisher](#stream-manager-proxy-publisher)
 
-## Basic Subscription
+## Basic Publisher
 
 ```sh
 $ cd ./rtcbee-publisher
@@ -81,8 +82,21 @@ If you dont set this parameters, script will be use default `vw=640&vh=480&fr=24
 
 #### Example
 
+example 
+
 ```sh
-$ ./rtcbee_publish.sh https://your.red5pro-deploy.com/live/basic-publisher.html?streamName=streamname 10 10 /path_to_the_video_file/test.y4m /path_to_the_audio_file/test.wav 'vw=640&vh=480&fr=24&bwA=56&bwV=750'
+./rtcbee_publish.sh https://your.red5pro-deploy.com/live/basic-publisher.html?streamName=streamname 10 10 /path_to_the_video_file/test.y4m /path_to_the_audio_file/test.wav 'vw=640&vh=480&fr=24&bwA=56&bwV=750'
+```
+
+## Stream Manager Proxy Publisher
+
+```sh
+$ cd ./rtcbee-publisher
+$ rtcbee_publish.sh [proxy-publisher.html endpoint] [amount of streams to start] [amount of time to playback] [path to the video file .y4m] [path to the audio file .wav] [parameters of quality]
+```
+
+```sh
+$ ./rtcbee_publish.sh https://your.red5pro-streammanager.com/live/proxy-publisher.html?streamName=streamname 10 10 /path_to_the_video_file/test.y4m /path_to_the_audio_file/test.wav 'vw=640&vh=480&fr=24&bwA=56&bwV=750'
 #
 ```
 
